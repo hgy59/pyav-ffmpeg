@@ -85,9 +85,20 @@ jobs:
           python-version: "3.9"
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
-      - name: Build FFmpeg dependencies
+      - name: Build FFmpeg dependencies manylinux2014
+        if: matrix.arch == 'aarch64' || matrix.arch == 'ppc64le'
         run: |
           docker run -v $PWD:/project:rw --workdir=/project quay.io/pypa/manylinux2014_${{ matrix.arch }} bash -exc '
+            export PATH=/opt/python/cp39-cp39/bin:$PATH;
+            export CIBUILDWHEEL=1;
+            python scripts/build-ffmpeg.py /tmp/vendor --stage ${{ env.stage }};
+            cp -ar /tmp/vendor /project;
+          '
+        shell: bash
+      - name: Build FFmpeg dependencies manylinux_2_31
+        if: matrix.arch == 'armv7l'
+        run: |
+          docker run -v $PWD:/project:rw --workdir=/project quay.io/pypa/manylinux_2_31_${{ matrix.arch }} bash -exc '
             export PATH=/opt/python/cp39-cp39/bin:$PATH;
             export CIBUILDWHEEL=1;
             python scripts/build-ffmpeg.py /tmp/vendor --stage ${{ env.stage }};
